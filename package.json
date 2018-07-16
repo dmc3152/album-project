@@ -1,0 +1,11 @@
+{
+  "name": "Album-Project",
+  "description": "For Regis Class",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "async": "2.x",
+    "bluebird": "3.x",
+    "formidable": "^1.2.1"
+  }
+}
