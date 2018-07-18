@@ -1,8 +1,9 @@
-var http = require('http');
+var express = require('express');
+var app = express();
+
 var async = require('async');
 var path = require("path");
 var fs = require('fs');
-var url = require('url');
 var formidable = require('formidable');
 var appDir = path.dirname(require.main.filename);
 
@@ -112,7 +113,7 @@ function load_album(album_name, page, page_size, callback) {
         var start = page * page_size;
         var photos = only_files.slice(start, start + page_size);
         var obj = {
-          short_name: album_name.substring(1),
+          short_name: album_name,
           photos: photos
         };
         callback(null, obj);
@@ -144,32 +145,24 @@ function serve_page(req, res) {
   });
 }
 
-function handle_incoming_request(req, res) {
-  // parse the query params into an object and get the path
-  // without them. (2nd param true = parse the params).
-  req.parsed_url = url.parse(req.url, true);
-  var core_url = req.parsed_url.pathname;
+app.get('/fileupload', upload_file);
+app.get('/albums.json', handle_list_albums);
+app.get('/albums/:album_name.json', handle_get_album);
+app.get('/albums/:album_name/:image', function (req, res) {
+  serve_static_file('albums/' + req.params.album_name + '/' + req.params.image, res);
+});
+app.get('/content/:filename', function (req, res) {
+  serve_static_file('content/' + req.params.filename, res);
+});
+app.get('/templates/:template_name', function (req, res) {
+  serve_static_file('templates/' + req.params.template_name, res);
+});
+app.get('/pages/:page_name', serve_page);
+app.get('/pages/:page_name/:sub_page', serve_page);
+app.get('*', four_oh_four);
 
-  // test this fixed url to see what they're asking for
-  if(core_url.substring(core_url.length - 11) == '/fileupload') {
-    upload_file(req, res);
-  } else if (core_url.substring(0, 7) == '/pages/') {
-    serve_page(req, res);
-  } else if (core_url.substring(0, 11) == '/templates/') {
-    serve_static_file("templates/" + core_url.substring(11), res);
-  } else if (core_url.substring(0, 9) == '/content/') {
-    serve_static_file("content/" + core_url.substring(9), res);
-  } else if (core_url == '/albums.json') {
-    handle_list_albums(req, res);
-  } else if (core_url.substring(0, 7) == '/albums'
-    && core_url.substring(core_url.length - 5) == '.json') {
-    handle_get_album(req, res);
-  } else if (core_url.substring(0, 7) == '/albums'
-    && core_url.substring(core_url.length - 4) == '.jpg') {
-    serve_static_file("albums/" + core_url.substring(7), res);
-  } else {
-    send_failure(res, 404, invalid_resource());
-  }
+function four_oh_four(req, res) {
+  send_failure(res, 404, invalid_resource());
 }
 
 function upload_file(req, res) {
@@ -254,24 +247,19 @@ function upload_failure() {
 }
 
 function get_album_name(req) {
-  var core_url = req.parsed_url.pathname;
-  return core_url.substr(7, core_url.length - 12);
+  return req.params.album_name;
 }
 
 function get_template_name(req) {
-  var core_url = req.parsed_url.pathname;
-  return core_url.substring(11);       // remove /templates/
+  return req.params.template_name;
 }
 
 function get_query_params(req) {
-  return req.parsed_url.query;
+  return req.query;
 }
 
 function get_page_name(req) {
-  var core_url = req.parsed_url.pathname;
-  var parts = core_url.split("/");
-  return parts[2];
+  return req.params.page_name;
 }
 
-var s = http.createServer(handle_incoming_request);
-s.listen(8080);
+app.listen(8080);

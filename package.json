@@ -1,11 +1,12 @@
 {
   "name": "Album-Project",
   "description": "For Regis Class",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "dependencies": {
     "async": "2.x",
     "bluebird": "3.x",
-    "formidable": "^1.2.1"
+    "formidable": "^1.2.1",
+    "express": "4.x"
   }
 }
