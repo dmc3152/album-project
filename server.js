@@ -146,9 +146,9 @@ function serve_page(req, res) {
 }
 
 app.get('/fileupload', upload_file);
-app.get('/albums.json', handle_list_albums);
-app.get('/albums/:album_name.json', handle_get_album);
-app.get('/albums/:album_name/:image', function (req, res) {
+app.get('/v1/albums.json', handle_list_albums);
+app.get('/v1/albums/:album_name.json', handle_get_album);
+app.get('/v1/albums/:album_name/:image', function (req, res) {
   serve_static_file('albums/' + req.params.album_name + '/' + req.params.image, res);
 });
 app.get('/content/:filename', function (req, res) {

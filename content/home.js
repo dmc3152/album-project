@@ -8,7 +8,7 @@ $(function () {
       tmpl = d;
     });
     // Retrieve the server data and then initialize the page
-    $.getJSON("/albums.json", function (d) {                       // 2
+    $.getJSON("/v1/albums.json", function (d) {                       // 2
       $.extend(tdata, d.data);
     });
     // When AJAX calls are complete parse the template
