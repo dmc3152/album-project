@@ -28,7 +28,7 @@ function massage_album(d) {
   var obj = { photos: [] };
   var af = d.data.album_data;
   for (var i = 0; i < af.photos.length; i++) {
-    var url = "/v1/albums/" + af.short_name + "/" + af.photos[i].filename;
+    var url = "/albums/" + af.short_name + "/" + af.photos[i].filename;
     obj.photos.push({ url: url, desc: af.photos[i].filename });
   }
   return obj;

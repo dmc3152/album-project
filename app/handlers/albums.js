@@ -39,7 +39,7 @@ exports.album_by_name = function(req, res) {
 function load_album_list(callback) {
   // we will just assume that any directory in our 'albums'
   // subfolder is an album.
-  fs.readdir("albums", (err, files) => {
+  fs.readdir("../static/albums", (err, files) => {
     if (err) {
       callback({
         error: "file_error",
@@ -50,7 +50,7 @@ function load_album_list(callback) {
 
     var only_dirs = [];
     async.forEach(files, (element, cb) => {
-      fs.stat("albums/" + element, (err, stats) => {
+      fs.stat("../static/albums/" + element, (err, stats) => {
         if (err) {
           cb({
             error: "file_error",
@@ -72,7 +72,7 @@ function load_album_list(callback) {
 }
 
 function load_album(album_name, page, page_size, callback) {
-  fs.readdir("albums/" + album_name, (err, files) => {
+  fs.readdir("../static/albums/" + album_name, (err, files) => {
     if (err) {
       if (err.code == "ENOENT") {
         callback(no_such_album());
@@ -86,7 +86,7 @@ function load_album(album_name, page, page_size, callback) {
     }
 
     var only_files = [];
-    var path = "albums/" + album_name + "/";
+    var path = "../static/albums/" + album_name + "/";
     async.forEach(files, (element, cb) => {
       fs.stat(path + element, (err, stats) => {
         if (err) {
