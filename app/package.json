@@ -6,7 +6,13 @@
   "dependencies": {
     "async": "2.x",
     "bluebird": "3.x",
+    "body-parser": "1.x",
+    "cookie-parser": "1.x",
+    "express": "4.x",
+    "express-flash": "0.x",
+    "express-session": "1.x",
     "formidable": "^1.2.1",
-    "express": "4.x"
+    "passport": "0.3.x",
+    "passport-local": "1.x"
   }
 }
