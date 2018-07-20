@@ -12,6 +12,7 @@
     "express-flash": "0.x",
     "express-session": "1.x",
     "formidable": "^1.2.1",
+    "mongodb": "2.x",
     "passport": "0.3.x",
     "passport-local": "1.x"
   }
