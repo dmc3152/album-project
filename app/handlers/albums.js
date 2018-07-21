@@ -1,124 +1,256 @@
-var helper = require('./helpers.js');
+var helpers = require('./helpers.js');
+var album_data = require("../data/album.js");
 var async = require('async');
 var fs = require('fs');
 
 exports.version = "0.1.0";
 
-exports.list_all = function(req, res) {
-  load_album_list((err, albums) => {
-    if (err) {
-      helper.send_failure(res, 500, err);
-      return;
-    }
-
-    helper.send_success(res, { albums: albums });
-  });
+/**
+ * Album class.
+ */
+function Album(album_data) {
+  this.name = album_data.name;
+  this.date = album_data.date;
+  this.title = album_data.title;
+  this.description = album_data.description;
+  this._id = album_data._id;
 }
 
-exports.album_by_name = function(req, res) {
-  // get the GET params
-  var album_name = req.params.album_name;
-  var getp = req.query;
-  var page_num = getp.page ? getp.page : 0;
-  var page_size = getp.page_size ? getp.page_size : 1000;
+Album.prototype.name = null;
+Album.prototype.date = null;
+Album.prototype.title = null;
+Album.prototype.description = null;
 
-  if (isNaN(parseInt(page_num))) page_num = 0;
-  if (isNaN(parseInt(page_size))) page_size = 1000;
+Album.prototype.response_obj = function () {
+  return {
+    name: this.name,
+    date: this.date,
+    title: this.title,
+    description: this.description
+  };
+};
 
-  load_album(album_name, page_num, page_size, (err, album_contents) => {
-    if (err && err == "no_such_album") {
-      helper.send_failure(res, 404, err);
-    } else if (err) {
-      helper.send_failure(res, 500, err);
-    } else {
-      helper.send_success(res, { album_data: album_contents });
-    }
-  });
-}
+Album.prototype.photos = function (pn, ps, callback) {
+  if (this.album_photos != undefined) {
+    callback(null, this.album_photos);
+    return;
+  }
 
-function load_album_list(callback) {
-  // we will just assume that any directory in our 'albums'
-  // subfolder is an album.
-  fs.readdir("../static/albums", (err, files) => {
-    if (err) {
-      callback({
-        error: "file_error",
-        message: JSON.stringify(err)
-      });
-      return;
-    }
-
-    var only_dirs = [];
-    async.forEach(files, (element, cb) => {
-      fs.stat("../static/albums/" + element, (err, stats) => {
-        if (err) {
-          cb({
-            error: "file_error",
-            message: JSON.stringify(err)
-          });
-          return;
-        }
-        if (stats.isDirectory()) {
-          only_dirs.push({ name: element });
-        }
-        cb(null);
-      }
-      );
-    },
-      (err) => {
-        callback(err, err ? null : only_dirs);
-      });
-  });
-}
-
-function load_album(album_name, page, page_size, callback) {
-  fs.readdir("../static/albums/" + album_name, (err, files) => {
-    if (err) {
-      if (err.code == "ENOENT") {
-        callback(no_such_album());
-      } else {
-        callback({
-          error: "file_error",
-          message: JSON.stringify(err)
-        });
-      }
-      return;
-    }
-
-    var only_files = [];
-    var path = "../static/albums/" + album_name + "/";
-    async.forEach(files, (element, cb) => {
-      fs.stat(path + element, (err, stats) => {
-        if (err) {
-          cb({
-            error: "file_error",
-            message: JSON.stringify(err)
-          });
-          return;
-        }
-        if (stats.isFile()) {
-          var obj = {
-            filename: element,
-            desc: element
-          };
-          only_files.push(obj);
-        }
-        cb(null);
-      });
-    },
-
-    function (err) {
+  album_data.photos_for_album(this.name, pn, ps, function (err, results) {
       if (err) {
         callback(err);
+        return;
+      }
+
+      var out = [];
+      for (var i = 0; i < results.length; i++)
+        out.push(new Photo(results[i]));
+
+      this.album_photos = out;
+      callback(null, this.album_photos);
+    }
+  );
+};
+
+Album.prototype.add_photo = function (data, path, callback) {
+  album_data.add_photo(data, path, function (err, photo_data) {
+    if (err)
+      callback(err);
+    else {
+      var p = new Photo(photo_data);
+      if (this.all_photos)
+        this.all_photos.push(p);
+      else
+        this.app_photos = [p];
+
+      callback(null, p);
+    }
+  });
+};
+
+
+/**
+ * Photo class.
+ */
+function Photo(photo_data) {
+  this.filename = photo_data.filename;
+  this.date = photo_data.date;
+  this.albumid = photo_data.albumid;
+  this.description = photo_data.description;
+  this._id = photo_data._id;
+}
+
+Photo.prototype._id = null;
+Photo.prototype.filename = null;
+Photo.prototype.date = null;
+Photo.prototype.albumid = null;
+Photo.prototype.description = null;
+Photo.prototype.response_obj = function () {
+  return {
+    filename: this.filename,
+    date: this.date,
+    albumid: this.albumid,
+    description: this.description
+  };
+};
+
+/**
+ * Album module methods.
+ */
+exports.create_album = function (req, res) {
+  async.waterfall([
+    // make sure the albumid is valid 
+    function (cb) {
+      if (!req.body || !req.body.name) {
+        cb(helpers.no_such_album());
+        return;
+      }
+
+      // UNDONE: we should add some code to make sure the album
+      // doesn't already exist!
+      cb(null);
+    },
+
+    function (cb) {
+      album_data.create_album(req.body, cb);
+    }
+  ],
+    function (err, results) {
+      if (err) {
+        helpers.send_failure(res, helpers.http_code_for_error(err), err);
       } else {
-        var start = page * page_size;
-        var photos = only_files.slice(start, start + page_size);
-        var obj = {
-          short_name: album_name,
-          photos: photos
-        };
-        callback(null, obj);
+        var a = new Album(results);
+        helpers.send_success(res, { album: a.response_obj() });
       }
     });
+};
+
+exports.album_by_name = function (req, res) {
+  async.waterfall([
+    // get the album
+    function (cb) {
+      if (!req.params || !req.params.album_name)
+        cb(helpers.no_such_album());
+      else
+        album_data.album_by_name(req.params.album_name, cb);
+    }
+  ],
+    function (err, results) {
+      if (err) {
+        helpers.send_failure(res, helpers.http_code_for_error(err), err);
+      } else if (!results) {
+        err = helpers.no_such_album();
+        helpers.send_failure(res, helpers.http_code_for_error(err), err);
+      } else {
+        var a = new Album(results);
+        helpers.send_success(res, { album: a.response_obj() });
+      }
+    });
+};
+
+
+exports.list_all = function (req, res) {
+  album_data.all_albums("date", true, 0, 25, function (err, results) {
+    if (err) {
+      helpers.send_failure(res, helpers.http_code_for_error(err), err);
+    } else {
+      var out = [];
+      if (results) {
+        for (var i = 0; i < results.length; i++) {
+          out.push(new Album(results[i]).response_obj());
+        }
+      }
+      helpers.send_success(res, { albums: out });
+    }
   });
-}
+};
+
+exports.photos_for_album = function (req, res) {
+  var page_num = req.query.page ? req.query.page : 0;
+  var page_size = req.query.page_size ? req.query.page_size : 1000;
+
+  page_num = parseInt(page_num);
+  page_size = parseInt(page_size);
+  if (isNaN(page_num)) page_num = 0;
+  if (isNaN(page_size)) page_size = 1000;
+
+  var album;
+  async.waterfall([
+    function (cb) {
+      // first get the album.
+      if (!req.params || !req.params.album_name)
+        cb(helpers.no_such_album());
+      else
+        album_data.album_by_name(req.params.album_name, cb);
+    },
+
+    function (album_data, cb) {
+      if (!album_data) {
+        cb(helpers.no_such_album());
+        return;
+      }
+      album = new Album(album_data);
+      album.photos(page_num, page_size, cb);
+    },
+    function (photos, cb) {
+      var out = [];
+      for (var i = 0; i < photos.length; i++) {
+        out.push(photos[i].response_obj());
+      }
+      cb(null, out);
+    }
+  ],
+    function (err, results) {
+      if (err) {
+        helpers.send_failure(res, helpers.http_code_for_error(err), err);
+        return;
+      }
+      if (!results) results = [];
+      var out = {
+        photos: results,
+        album_data: album.response_obj()
+      };
+      helpers.send_success(res, out);
+    });
+};
+
+exports.add_photo_to_album = function (req, res) {
+  var album;
+  async.waterfall([
+    // make sure we have everything we need.
+    function (cb) {
+      if (!req.body)
+        cb(helpers.missing_data("POST data"));
+      else if (!req.file) {
+        console.log(req.file);
+        cb(helpers.missing_data("a file"));
+      } else if (!helpers.is_image(req.file.originalname))
+        cb(helpers.not_image());
+      else
+        // get the album
+        album_data.album_by_name(req.params.album_name, cb);
+    },
+
+    function (album_data, cb) {
+      if (!album_data) {
+        cb(helpers.no_such_album());
+        return;
+      }
+
+      album = new Album(album_data);
+      req.body.filename = req.file.originalname;
+      album.add_photo(req.body, req.file.path, cb);
+    }
+  ],
+    function (err, p) {
+      if (err) {
+        helpers.send_failure(res, helpers.http_code_for_error(err), err);
+        return;
+      }
+      var out = {
+        photo: p.response_obj(),
+        album_data: album.response_obj()
+      };
+      helpers.send_success(res, out);
+    });
+};

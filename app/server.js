@@ -5,6 +5,8 @@ var passport = require("passport");
 var LocalStrategy = require('passport-local').Strategy;
 var bodyParser = require('body-parser');
 var flash = require('express-flash');
+var morgan = require('morgan');
+var multer = require('multer');
 
 var app = express();
 
@@ -12,6 +14,8 @@ var path = require("path");
 var fs = require('fs');
 var formidable = require('formidable');
 var appDir = path.dirname(require.main.filename);
+
+var db = require('./data/db.js');
 var helper = require('./handlers/helpers.js');
 var album_hdlr = require('./handlers/albums.js');
 var page_hdlr = require('./handlers/pages.js');
@@ -37,19 +41,21 @@ var users = {
   "id1": { id: 1, username: "admin", password: "admin" }
 };
 
-function authenticatedOrNot(req, res, next){
-  if(req.isAuthenticated()){
-      next();
-  }else{
-      res.redirect("/login");
+function authenticatedOrNot(req, res, next) {
+  if (req.isAuthenticated()) {
+    next();
+  } else {
+    res.redirect("/login");
   }
 }
 
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // parse application/json
-app.use(bodyParser.json())
+app.use(bodyParser.json());
+
+var upload = multer({ dest: "uploads/" });
 
 passport.use(new LocalStrategy(
   function (username, password, done) {
@@ -86,16 +92,22 @@ passport.deserializeUser(function (userid, done) {
 
 
 app.use(express.static(__dirname + "/../static"));
+app.use(morgan('dev'));
 
 app.get('/fileupload', upload_file);
 app.get('/v1/albums.json', album_hdlr.list_all);
+app.put('/v1/albums.json', album_hdlr.create_album);
+
 app.get('/v1/albums/:album_name.json', album_hdlr.album_by_name);
+app.get('/v1/albums/:album_name/photos.json', album_hdlr.photos_for_album);
+app.put('/v1/albums/:album_name/photos.json', upload.single("photo_file"), album_hdlr.add_photo_to_album);
+
 app.get('/pages/:page_name', page_hdlr.generate);
 app.get('/pages/:page_name/:sub_page', page_hdlr.generate);
 
 app.get("/", function (req, res) {
-  console.log(req.flash());
-  res.send('<a href="/login">Login Here</a>');
+  res.redirect("/pages/home");
+  res.end();
 });
 
 app.get("/login", function (req, res) {
@@ -155,4 +167,13 @@ function upload_file(req, res) {
   });
 }
 
-app.listen(8080);
+db.init(function (err, results) {
+  if (err) {
+    console.error("** FATAL ERROR ON STARTUP: ");
+    console.error(err);
+    process.exit(-1);
+  }
+
+  console.log("Initialisation complete. Running Server.");
+  app.listen(8080);
+});

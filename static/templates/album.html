@@ -1,21 +1,24 @@
+<a href="/">Home</a>
 <div id="album_page">
-  <p> There are {{ photos.length }} photos in this album</p>
+  <p> <strong>Title:</strong> {{ album_data.title }} </p>
+  <p> <strong>Date:</strong> {{ album_data.date }} </p>
+  <p> <strong>Description:</strong> {{ album_data.description }} </p>
+  <p> <strong>Photos:</strong></p>
+  {{#has_photos}}
+  <p> There are {{ has_photos }} photos in this album</p>
+  {{/has_photos}}
   {{#photos}}
   <div id="photos">
-    <div class="photo">
-      <div class='photo_holder'>
-        <img style='width: 250px; height: 250px; background-color: #fbb' src="{{url}}" border="0" />
+      <div class="photo">
+        <div class='photo_holder'>
+          <img style="width: 250px; height: 250px"
+               src="{{url}}" border="0"/></div>
+        <div class='photo_desc'><p>{{ desc }}</p></div>
       </div>
-      <div class='photo_desc'>
-        <p>{{ desc }}</p>
-      </div>
-    </div>
-  </div>
-  <!-- #photos -->
+  </div> <!-- #photos -->
+  {{/photos}}
   <div style="clear: left"></div>
-  {{/photos}} {{^photos}}
-  <p> This album doesn't have any photos in it, sorry.
-    <p>
-      {{/photos}}
-</div>
-<!-- #album_page -->
+  {{^photos}}
+      <p> This album does't have any photos in it, sorry.<p>
+  {{/photos}}
+</div> <!-- #album_page -->
