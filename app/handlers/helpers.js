@@ -82,3 +82,11 @@ exports.valid_filename = function (fn) {
   var re = /[^\.a-zA-Z0-9_-]/;
   return typeof fn == 'string' && fn.length > 0 && !(fn.match(re));
 };
+
+exports.invalid_email_address = function () {
+  return exports.error("invalid_email_address", "That's not a valid email address, sorry");
+};
+
+exports.auth_failed = function () {
+  return exports.error("auth_failure", "Invalid email address / password combination.");
+};

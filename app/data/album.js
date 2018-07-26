@@ -1,6 +1,5 @@
 var fs = require('fs');
-var crypto = require("crypto");
-var local = require('../local.config.json');
+var local = require('../local.config.js');
 var db = require('./db.js');
 var path = require("path");
 var async = require('async');
@@ -83,7 +82,7 @@ exports.album_by_name = function (name, callback) {
 
 exports.photos_for_album = function (album_name, pn, ps, callback) {
   console.log(album_name, pn, ps);
-  var sort = { date: -1 };
+  // var sort = { date: -1 };
   db.photos.find({ albumid: album_name })
     .skip(pn)
     .limit(ps)

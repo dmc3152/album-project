@@ -1,3 +1,8 @@
+<div style="float: right">
+  <a href="/pages/register">Register</a> | 
+  <a href="/pages/admin/home">Admin</a>
+</div>
+
 <div id="album_list">
   <p> There are {{ albums.length }} albums</p>
   <ul id="albums">
@@ -9,13 +14,4 @@
     <li> Sorry, there are currently no albums </li>
     {{/albums}}
   </ul>
-</div>
-
-<div>
-  <h4>Upload Files</h4>
-  <p>Only jpg files will display correctly. Uploaded pictures are placed in album1.</p>
-  <form action="fileupload" method="post" enctype="multipart/form-data">
-    <input type="file" name="fileToUpload">
-    <input type="submit" value="Submit">
-  </form>
 </div>

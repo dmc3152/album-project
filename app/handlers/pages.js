@@ -3,6 +3,11 @@ var fs = require("fs");
 
 exports.version = "0.1.0";
 
+exports.generateAdmin = function (req, res) {
+  req.params.page_name = 'admin_' + req.params.sub_page;
+  exports.generate(req, res);
+};
+
 exports.generate = function(req, res) {
   var page = req.params.page_name;
 
@@ -18,3 +23,9 @@ exports.generate = function(req, res) {
     res.end(contents);
   });
 }
+
+// if we made it here, then we're logged in. redirect to admin home
+exports.login = function (req, res) {
+  res.redirect("/pages/admin/home");
+  res.end();
+};

@@ -80,3 +80,15 @@ exports.album_already_exists = function () {
   return exports.error("album_already_exists",
     "An album with this name already exists.");
 };
+
+exports.missing_data = function (field) {
+  return exports.error("missing_data", "You must provide: " + field);
+};
+
+exports.no_such_user = function () {
+  return exports.error("no_such_user", "The specified user does not exist");
+};
+
+exports.user_already_registered = function () {
+  return exports.error("user_already_registered", "This user appears to exist already!");
+};
