@@ -34,7 +34,7 @@ app.use(bodyParser.json());
 
 var upload = multer({ dest: "uploads/" });
 
-app.use(express.static(__dirname + "/../static"));
+app.use(express.static(__dirname + "/static"));
 app.use(morgan('dev'));
 
 app.get('/v1/albums.json', album_hdlr.list_all);
@@ -108,6 +108,7 @@ function need_auth(req, res) {
   }
 }
 
+var port = process.env.PORT || process.env.port || 5000;
 db.init(function (err, results) {
   if (err) {
     console.error("** FATAL ERROR ON STARTUP: ");
@@ -115,6 +116,6 @@ db.init(function (err, results) {
     process.exit(-1);
   }
 
-  console.log("Initialisation complete. Running Server.");
-  app.listen(8080);
+  console.log("Initialisation complete. Running Server on port " + port + ".");
+  app.listen(port);
 });
